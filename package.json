@@ -11,6 +11,10 @@
 		"email" : "jmanero@dyn.com"
 	},
 	"license":  "MIT",
+	"repository" : {
+		"type" : "git",
+		"url" : "https://github.com/jmanero/nsq-client"
+	},
 	"engines": {
 		"node": "0.8.x"
 	}
