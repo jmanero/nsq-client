@@ -1,0 +1,17 @@
+{
+	"name" : "nsq-client",
+	"version" : "0.0.1",
+	"description" : "Simple native client for V2 of Bitly's NSQ messaging service",
+	"dependencies" : {
+		"qrly" : "0.1.x",
+		"simple-request" : "0.0.x"
+	},
+	"author" : {
+		"name" : "John Manero",
+		"email" : "jmanero@dyn.com"
+	},
+	"license":  "MIT",
+	"engines": {
+		"node": "0.8.x"
+	}
+}
