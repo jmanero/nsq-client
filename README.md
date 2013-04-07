@@ -4,7 +4,44 @@ A simple implementation of the NSQ-V2 protocol using native Buffer objects,
 based entirely upon the protocol documentation found in
 [Bitly's GitHub project](https://github.com/bitly/nsq/blob/master/docs/protocol.md).
 
-### NSQ Cluster Client
+### Connection
+_Stable: A single TCP connection to a single `nsqd` instance_
+
+    var NSQ = require('nsq-client');
+    var Client = NSQ.Connection
+    var Message = NSQ.Message;
+    
+    var Util = require('util');
+    
+    var c = Client.connect(<hostname>[, <port>]); // Defaults to port 4150
+    
+    // Optional callback...
+    c.subscribe("foo", "bar", function() {
+    	// Is done.
+    });
+    
+    c.on('message', function(msg, meta) {
+        console.log("NSQ ID is " + message.id);
+        console.log("This is the " + msg.attempts
+            + " attempt to deliver this message" + (msg.attempts > 5 ? "!" : ""));
+        console.log("Data: " + Util.inspect(msg.data, false, null));
+        
+        // Meta
+        console.log("Message data is " + meta.size + " bytes long");
+        console.log("The NSQ frame type of this message is " + meta.type
+            + " (if it's not 2, something's wrong...)")
+    });
+    
+    c.ready(3);
+    
+     // topic is "foo", in message constructor
+    c.publish(new Message({ some : "JSON-serializable Object/string/whatever"}, "foo"))
+    
+    c.close();
+    
+
+### Clustered Client
+_Alpha Functionality: Use `lookupd` to connect to an array of `nsqd` instances_
 
     var NSQ = require('nsq-client');
     
@@ -28,9 +65,23 @@ based entirely upon the protocol documentation found in
         
     })
     topic.subscribe("bar#ephemeral");
+    
+    topic.publish(new Message({ some : "JSON-serializable Object/string/whatever"}, "foo"))
 
 ### Not Implemented... Yet
  * `MPUB` operation
+
+### Notes
+ * These docs are (clearly) far from complete. I'm happy to consider pull requests from anyone who would like to
+ contribute to them; or to anything in this repo for that matter...
+ * In general, methods exposed by instantiated `Connection` objects accept a callback. At this time, execution of said
+ callbacks only indicates that the underlying NSQ message was flushed from the buffer of the client TCP socket, or an
+ input error (e.g. bad topic or channel string) occurred and no message was sent. Start with the
+ [NodeJS net.Socket](http://nodejs.org/docs/v0.8.19/api/net.html#net_socket_write_data_encoding_callback) documentation
+ for insight into the behavior of the `Socket.write()` method.
+ * Correlation of requests and errors is somewhat difficult due to the asynchronous nature of the NSQ TCP protocol.
+ For now, `Connection` objects just emit `error` events when `error`-type frames are received. I'm open to suggestions
+ as to a reliable way to bubble errors back up to the correct callback...
 
 ## MIT License
 Copyright (c) 2013 John Manero, Dynamic Network Services Inc.
