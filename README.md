@@ -68,8 +68,12 @@ _Alpha Functionality: Use `lookupd` to connect to an array of `nsqd` instances_
     
     topic.publish(new Message({ some : "JSON-serializable Object/string/whatever"}, "foo"))
 
-### Not Implemented... Yet
+### TODO
+ * `IDENTIFY`
  * `MPUB` operation
+ * Atomic request-response handling
+ * Use `lookupd` more better. Differentiate between producer and consumer modes when connecting. Possibly split `Topic` into separate prototypes
+ to that end...
 
 ### Notes
  * These docs are (clearly) far from complete. I'm happy to consider pull requests from anyone who would like to
@@ -82,6 +86,8 @@ _Alpha Functionality: Use `lookupd` to connect to an array of `nsqd` instances_
  * Correlation of requests and errors is somewhat difficult due to the asynchronous nature of the NSQ TCP protocol.
  For now, `Connection` objects just emit `error` events when `error`-type frames are received. I'm open to suggestions
  as to a reliable way to bubble errors back up to the correct callback...
+  * UPDATE: As more documentation is being made available, it appears that the protocol expects only one message to be
+  send at a time, and will send an atomic response. Added to TODO...
 
 ## MIT License
 Copyright (c) 2013 John Manero, Dynamic Network Services Inc.
