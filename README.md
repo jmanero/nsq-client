@@ -5,7 +5,7 @@ based entirely upon the protocol documentation found in
 [Bitly's GitHub project](https://github.com/bitly/nsq/blob/master/docs/protocol.md).
 
 ### Connection
-_Stable: A single TCP connection to a single `nsqd` instance_
+_A single TCP connection to a single `nsqd` instance_
 
     var NSQ = require('nsq-client');
     var Client = NSQ.Connection
@@ -16,64 +16,32 @@ _Stable: A single TCP connection to a single `nsqd` instance_
     var c = Client.connect(<hostname>[, <port>]); // Defaults to port 4150
     
     // Optional callback...
-    c.subscribe("foo", "bar", function() {
-    	// Is done.
-    });
-    
-    c.on('message', function(msg, meta) {
-        console.log("NSQ ID is " + message.id);
-        console.log("This is the " + msg.attempts
-            + " attempt to deliver this message" + (msg.attempts > 5 ? "!" : ""));
-        console.log("Data: " + Util.inspect(msg.data, false, null));
+    c.subscribe("foo", "bar", function(err, sub) {
+    	if(err)
+    	    throw err;
         
-        // Meta
-        console.log("Message data is " + meta.size + " bytes long");
-        console.log("The NSQ frame type of this message is " + meta.type
-            + " (if it's not 2, something's wrong...)")
+        sub.on('message', function(message) {
+            ...
+            message.finish(); // or .requeue(), or .touch()
+        });
     });
     
-    c.ready(3);
+    c.publish(new Message({ some : "JSON-serializable Object/string/whatever"}), "foo")
     
-     // topic is "foo", in message constructor
-    c.publish(new Message({ some : "JSON-serializable Object/string/whatever"}, "foo"))
-    
-    c.close();
+    // c.close();
     
 
 ### Clustered Client
-_Alpha Functionality: Use `lookupd` to connect to an array of `nsqd` instances_
-
-    var NSQ = require('nsq-client');
-    
-    var cluster = new NSQ.Cluster(lookupd.host, lookupd.port);
-    var topic = cluster.connect("foo");
-    
-    // Filter duplicated messages
-    topic.mutex = function(message, result) {
-        DB.update({ id : message.id, won : false }, { $set : { won : true } }, function(err, count) {
-            return(err, !!count); // err will requeue message; count == false will finish message and drop it;
-            // count == true will emit message to application
-        });
-    };
-    
-    topic.on('message', function(m) {
-        
-        if(m.a)
-	        m.finish();
-	    else
-	    	m.requeue();
-        
-    })
-    topic.subscribe("bar#ephemeral");
-    
-    topic.publish(new Message({ some : "JSON-serializable Object/string/whatever"}, "foo"))
+Removed until it can be refactored to use the updated `connection` API
 
 ### TODO
  * `IDENTIFY`
  * `MPUB` operation
- * Atomic request-response handling
- * Use `lookupd` more better. Differentiate between producer and consumer modes when connecting. Possibly split `Topic` into separate prototypes
- to that end...
+ * ~~Atomic request-response handling~~ _v0.1.0_
+ * Use `lookupd` more better. Differentiate between producer and consumer modes when
+ connecting. Possibly split `Topic` into separate prototypes to that end...
+ * Implement socket-failure tolerance in `Connection`. Figure out how to reconnect
+ intelligently to an available `nsqd`
 
 ### Notes
  * These docs are (clearly) far from complete. I'm happy to consider pull requests from anyone who would like to
