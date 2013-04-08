@@ -1,27 +1,42 @@
 var NSQ = require('../index').Connection;
-var Message = require('../lib/message');
+var Message = require('../lib/model/message');
 
 var config = require('./conf').nsqd;
 var Util = require('util');
 
 var nsq = NSQ.connect(config.host, config.port);
-nsq.on('response', function(data, meta) {
-	Util.log("CONTROL: " + data + " (size: " + meta.size + ", type : " + meta.type + ")");
+
+nsq.on('error', function(e) {
+	Util.error(Util.inspect(e, false, null) + "\n" + e.stack);
 });
 
-nsq.on('error', function(e, meta) {
-	Util.log("ERROR:    " + e.code + " (size: " + meta.size + ", type : " + meta.type + ")");
+Util.log("Subscribe");
+nsq.subscribe('foo', 'bar#ephemeral', function(err, sub) {
+	if(err) {
+		Util.error(Util.inspect(err, false, null) + "\n" + err.stack);
+		return;
+	}
+	
+	Util.log("Subscribed");
+	
+	sub.on('message', function(m) {
+		Util.log("Message: " + Util.inspect(m, false, null));
+		m.finish();
+	});
+	
+//	sub.resume();
 });
-
-nsq.on('message', function(message, meta) {
-	Util.log("MESSAGE:  " + Util.inspect(message) + " (size: " + meta.size + ", type : " + meta.type + ")");
-	nsq.finish(message.id);
-	nsq.ready(1);
-});
-
-nsq.subscribe('foo', 'bar#ephemeral');
-nsq.ready(1);
 
 setInterval(function() {
-	nsq.publish(new Message({ arm : "elbow"}, "foo"));
+	var data = { arm : "elbow"};
+	Util.log("Publish " + Util.inspect(data));
+	
+	nsq.publish(new Message(), "foo", function(err, res) {
+		if(err) {
+			Util.error(err);
+			return;
+		}
+		
+		Util.log("Response: " + Util.inspect(res, false, null));
+	});
 }, 1000);
