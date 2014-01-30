@@ -4,9 +4,8 @@
 	"description" : "An NSQ V2 client with HA-clustering and user-extensible message filtering/de-duplicating features implemented using native Buffer objects",
 	"keywords" : [ "nsq", "nsq client", "bitly" ],
 	"dependencies" : {
-		"qrly" : "0.1.x",
-		"simple-request" : "0.0.x",
-		"stater" : "0.0.x"
+		"int64-native" : "0.2.1",
+		"qrly" : "0.1.x"
 	},
 	"author" : {
 		"name" : "John Manero",
@@ -18,6 +17,6 @@
 		"url" : "https://github.com/jmanero/nsq-client"
 	},
 	"engines": {
-		"node": "0.8.x"
+		"node": ">= 0.8"
 	}
 }

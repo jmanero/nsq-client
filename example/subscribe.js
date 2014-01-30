@@ -8,7 +8,7 @@ var channel = OS.hostname();
 process.argv.slice(2).forEach(function(topic) {
     console.log("Subscribing to " + topic + "/" + channel);
     var subscriber = client.subscribe(topic, channel, {
-        ephemeral : true
+        ephemeral : false
     });
     subscriber.on("error", function(error) {
         console.log(topic + "::error " + Util.inspect(error));
