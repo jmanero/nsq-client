@@ -1,13 +1,13 @@
+var Crypto = require("crypto");
 var NSQClient = require("../index");
 var Util = require("util");
-var Crypto = require("crypto");
 
 var client = new NSQClient();
 client.publisher().on("error", function() {
-    Util.log("error " + Util.inspect(Array.apply(null, arguments)));
+    console.log("error " + Util.inspect(Array.apply(null, arguments)));
 });
 client.publisher().on("event", function() {
-    Util.log("event " + Util.inspect(Array.apply(null, arguments)));
+    console.log("event " + Util.inspect(Array.apply(null, arguments)));
 });
 
 var topics = process.argv.slice(2);
