@@ -1,28 +1,33 @@
-var NSQ = require('../index').Connection;
+var NSQClient = require("../index");
+var OS = require("os");
+var Util = require("util");
 
-var config = require('./conf').nsqd;
-var Util = require('util');
+var client = new NSQClient();
 
-var nsq = NSQ.connect(config.host, config.port);
-nsq.on('response', function(data, meta) {
-	Util.log("CONTROL: " + data + " (size: " + meta.size + ", type : " + meta.type + ")");
+var channel = OS.hostname();
+process.argv.slice(2).forEach(function(topic) {
+    console.log("Subscribing to " + topic + "/" + channel);
+    var subscriber = client.subscribe(topic, channel, {
+        ephemeral : true
+    });
+    subscriber.on("error", function(error) {
+        console.log(topic + "::error " + Util.inspect(error));
+    });
+    subscriber.on("event", function() {
+        console.log(topic + "::event " + Util.inspect(Array.apply(null, arguments)));
+    });
+    subscriber.on("message", function(message) {
+        message.finish();
+    });
 });
 
-nsq.on('error', function(e, meta) {
-	Util.log("ERROR:    " + e.code + " (size: " + meta.size + ", type : " + meta.type + ")");
-});
-
-nsq.on('message', function(message, meta) {
-	Util.log("MESSAGE:  " + Util.inspect(message) + " (size: " + meta.size + ", type : " + meta.type + ")");
-	nsq.finish(message.id);
-	nsq.ready(4);
-});
-
-nsq.subscribe("foo", "bar");
-nsq.ready(1);
-
-process.on('SIGINT', function() {
-	nsq.close(function() {
-		process.exit();
-	});
+process.once("SIGINT", function() {
+    process.once("SIGINT", process.exit);
+    
+    console.log();
+    console.log("Closing client connections");
+    console.log("Press CTL-C again to force quit");
+    client.close(function() {
+        process.exit();
+    });
 });
