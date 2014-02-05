@@ -5,7 +5,8 @@
 	"keywords" : [ "nsq", "nsq client", "bitly" ],
 	"dependencies" : {
 		"int64-native" : "0.2.1",
-		"qrly" : "0.1.x"
+		"qrly" : "0.1.x",
+		"request" : "2.33.x"
 	},
 	"author" : {
 		"name" : "John Manero",

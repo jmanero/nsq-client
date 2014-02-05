@@ -42,14 +42,20 @@ var Client = module.exports = function(options) {
     if (typeof options === "string")
         options = URL.parse(options)
 
+    this.debug = !!options.debug; // Noisy Events
     this.host = options.hostname || "localhost"
     this.port = +(options.port) || 4150
+    
+    // ALPHA lookupd HTTP API
+    if(options.lookupd)
+        this.lookupd = URL.parse(options.lookupd);
 
     this._connections = [];
 };
 Util.inherits(Client, EventEmitter);
 
 var Connection = Client.Connection = require("./lib/connection");
+Client.Lookupd = require("./lib/lookupd");
 Client.Message = require("./lib/message");
 
 /**
