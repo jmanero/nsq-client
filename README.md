@@ -88,29 +88,13 @@ process.once("SIGINT", function() {
 ```
 
 ### TODO
-#### Release 1.0.0 (~~February 2014~~ May 2014)
- * Major overhaul of the `Protocol` state machine
-   * TCP failure tolerance and reconnection
-   * Proper transaction handling for REQ/REP Commands (`IDENTIFY`, `SUB`, `PUB`, `CLS`)
-   * Error response handling
- * Separation of the `Connection` controller from `NSQClient`. An instance of
-   `NSQClient` now stores connection data for a single `nsqd` endpoint and
-   provides methods to create/access a dedicated publisher `Connection` and to
-   create subscriber `Connection`s.
- * `Subscriber` state-machine
-   * Wrap and manage the ready-state of subscriber `Connection`
-   * Handle re-subscription on re-connection of the underlying `Protocol`
-   * Handle clean un-subscription on close of the underlying `Connection`
- * Use [int64-native](https://npmjs.org/package/int64-native) to handle message timestamps
-
-#### Someday
  * `MPUB`
  * Clustered operation
    * Discover `nsqd` instances and available topics with the `nsqlookupd` API
    * Provide schemes for `nsqd` failover, message de-duping
 
 ## MIT License
-    Copyright (c) 2013 John Manero, Dynamic Network Services Inc.
+    Copyright (c) 2014 John Manero, Dynamic Network Services Inc.
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of
     this software and associated documentation files (the "Software"), to deal in

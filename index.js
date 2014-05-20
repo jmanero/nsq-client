@@ -8,21 +8,21 @@ var URL = require("url");
 
 // Safe-ish callbacks
 function nothing() {}
+
 function _callback(something) {
-    return (typeof something === "function") ? something : nothing;
+  return (typeof something === "function") ? something : nothing;
 }
 
 // Iterates *DESTRUCTIVLY* through an array of asynchronous tasks (Serially)
 // HINT pass `<array>.concat([])` as `tasks`
 function loopy(tasks, handler, complete) {
-    if (tasks.length === 0)
-        return complete();
+  if (tasks.length === 0)
+    return complete();
 
-    handler(tasks.shift(), function(err) {
-        if (err)
-            return complete(err);
-        loopy(tasks, handler, complete);
-    });
+  handler(tasks.shift(), function(err) {
+    if (err) return complete(err);
+    loopy(tasks, handler, complete);
+  });
 }
 
 /**
@@ -36,19 +36,18 @@ function loopy(tasks, handler, complete) {
  *            </ul>
  */
 var Client = module.exports = function(options) {
-    EventEmitter.call(this);
-    options = options || {};
-    if (typeof options === "string")
-        options = URL.parse(options);
+  EventEmitter.call(this);
+  options = options || {};
+  if (typeof options === "string") options = URL.parse(options);
 
-    this.debug = !!options.debug; // Noisy Events
-    this.host = options.hostname || "localhost";
-    this.port = +(options.port) || 4150;
-    this.reconnect = (typeof options.reconnect === "undefined") ? 2500 : options.reconnect;
-    this.timeout = (typeof options.timeout === "undefined") ? 1000 : options.timeout;
+  this.debug = !! options.debug; // Noisy Events
+  this.host = options.hostname || "localhost";
+  this.port = +(options.port) || 4150;
+  this.reconnect = (typeof options.reconnect === "undefined") ? 2500 : options.reconnect;
+  this.timeout = (typeof options.timeout === "undefined") ? 1000 : options.timeout;
 
-    // Track connection objects
-    this._connections = {};
+  // Track connection objects
+  this._connections = {};
 };
 Util.inherits(Client, EventEmitter);
 
@@ -60,29 +59,28 @@ Client.Message = require("./lib/message");
  * Create a new connection
  */
 Client.prototype.connection = function() {
-    var client = this;
-    var connection = new Connection(this);
+  var client = this;
+  var connection = new Connection(this);
 
-    if(this.debug) {
-        connection.on("debug", function(event) {
-            event.unshift(connection.identity);
-            client.emit("debug", event);
-        });
-    }
-
-    this._connections[connection.identity] = connection; // Store connections for clean close
-    connection.once("close", function() { // Cleanup connection pool ref
-        delete client._connections[connection.identity];
+  if (this.debug) {
+    connection.on("debug", function(event) {
+      event.unshift(connection.identity);
+      client.emit("debug", event);
     });
+  }
 
-    return connection;
+  this._connections[connection.identity] = connection; // Store connections for clean close
+  connection.once("close", function() { // Cleanup connection pool ref
+    delete client._connections[connection.identity];
+  });
+
+  return connection;
 };
 
 Client.prototype.publisher = function() {
-    if (!this._publisher) // Start the publisher connection
-        this._publisher = this.connection();
-
-    return this._publisher;
+  // Start the publisher connection
+  if (!this._publisher) this._publisher = this.connection();
+  return this._publisher;
 };
 
 /**
@@ -95,7 +93,7 @@ Client.prototype.publisher = function() {
  * @returns Subscriber
  */
 Client.prototype.subscribe = function(topic, channel, options) {
-    return this.connection().subscribe(topic, channel, options);
+  return this.connection().subscribe(topic, channel, options);
 };
 
 /**
@@ -106,7 +104,7 @@ Client.prototype.subscribe = function(topic, channel, options) {
  * @param callback
  */
 Client.prototype.publish = function(topic, message, callback) {
-    this.publisher().publish(topic, message, _callback(callback));
+  this.publisher().publish(topic, message, _callback(callback));
 };
 
 /**
@@ -115,8 +113,8 @@ Client.prototype.publish = function(topic, message, callback) {
  * @param callback
  */
 Client.prototype.close = function(callback) {
-    var client = this;
-    loopy(Object.keys(this._connections), function(identity, closed) {
-        client._connections[identity].close(closed);
-    }, _callback(callback));
+  var client = this;
+  loopy(Object.keys(this._connections), function(identity, closed) {
+    client._connections[identity].close(closed);
+  }, _callback(callback));
 };
