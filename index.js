@@ -2,7 +2,6 @@
  * NSQ CLient (Non-Clustered)
  ******************************************************************************/
 
-// Add pipe helper to EventEmitter
 var EventEmitter = require("events").EventEmitter;
 var Util = require("util");
 var URL = require("url");
@@ -16,7 +15,7 @@ function _callback(something) {
 // Iterates *DESTRUCTIVLY* through an array of asynchronous tasks (Serially)
 // HINT pass `<array>.concat([])` as `tasks`
 function loopy(tasks, handler, complete) {
-    if (tasks.length == 0)
+    if (tasks.length === 0)
         return complete();
 
     handler(tasks.shift(), function(err) {
@@ -29,7 +28,7 @@ function loopy(tasks, handler, complete) {
 /**
  * A collection of subscriber connections and a publisher connection to a single
  * instance of nsqd
- * 
+ *
  * @param options
  *            <ul>
  *            <li>A string formatted as a URL: nsq://hostname:port</li>
@@ -38,19 +37,18 @@ function loopy(tasks, handler, complete) {
  */
 var Client = module.exports = function(options) {
     EventEmitter.call(this);
-    options = options || {}
+    options = options || {};
     if (typeof options === "string")
-        options = URL.parse(options)
+        options = URL.parse(options);
 
     this.debug = !!options.debug; // Noisy Events
-    this.host = options.hostname || "localhost"
-    this.port = +(options.port) || 4150
-    
-    // ALPHA lookupd HTTP API
-    if(options.lookupd)
-        this.lookupd = URL.parse(options.lookupd);
+    this.host = options.hostname || "localhost";
+    this.port = +(options.port) || 4150;
+    this.reconnect = (typeof options.reconnect === "undefined") ? 2500 : options.reconnect;
+    this.timeout = (typeof options.timeout === "undefined") ? 1000 : options.timeout;
 
-    this._connections = [];
+    // Track connection objects
+    this._connections = {};
 };
 Util.inherits(Client, EventEmitter);
 
@@ -61,38 +59,48 @@ Client.Message = require("./lib/message");
 /**
  * Create a new connection
  */
-Client.prototype.connection = function(ident) {
+Client.prototype.connection = function() {
     var client = this;
     var connection = new Connection(this);
-    connection._identity = ident || "";
 
-    this._connections.push(connection); // Store connections for clean close
+    if(this.debug) {
+        connection.on("debug", function(event) {
+            event.unshift(connection.identity);
+            client.emit("debug", event);
+        });
+    }
+
+    this._connections[connection.identity] = connection; // Store connections for clean close
+    connection.once("close", function() { // Cleanup connection pool ref
+        delete client._connections[connection.identity];
+    });
+
     return connection;
 };
 
 Client.prototype.publisher = function() {
     if (!this._publisher) // Start the publisher connection
-        this._publisher = this.connection("publisher");
+        this._publisher = this.connection();
 
     return this._publisher;
 };
 
 /**
  * Create a subscriber connection for specified topic/channel
- * 
+ *
  * @param topic
  * @param channel
  * @param options
- * 
+ *
  * @returns Subscriber
  */
 Client.prototype.subscribe = function(topic, channel, options) {
-    return this.connection(topic + "/" + channel).subscribe(topic, channel, options);
+    return this.connection().subscribe(topic, channel, options);
 };
 
 /**
  * Publish a message to channel
- * 
+ *
  * @param topic
  * @param message
  * @param callback
@@ -103,11 +111,12 @@ Client.prototype.publish = function(topic, message, callback) {
 
 /**
  * Close all open connections
- * 
+ *
  * @param callback
  */
 Client.prototype.close = function(callback) {
-    loopy(this._connections, function(connection, closed) {
-        connection.close(closed);
+    var client = this;
+    loopy(Object.keys(this._connections), function(identity, closed) {
+        client._connections[identity].close(closed);
     }, _callback(callback));
 };

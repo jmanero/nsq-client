@@ -2,7 +2,9 @@ var Crypto = require("crypto");
 var NSQClient = require("../index");
 var Util = require("util");
 
-var client = new NSQClient();
+var client = new NSQClient({
+  debug : true
+});
 client.publisher().on("error", function() {
     console.log("error " + Util.inspect(Array.apply(null, arguments)));
 });
