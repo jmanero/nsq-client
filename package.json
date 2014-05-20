@@ -1,6 +1,6 @@
 {
 	"name" : "nsq-client",
-	"version" : "0.1.0",
+	"version" : "0.1.1-alpha.1",
 	"description" : "An NSQ V2 client with HA-clustering and user-extensible message filtering/de-duplicating features implemented using native Buffer objects",
 	"keywords" : [ "nsq", "nsq client", "bitly" ],
 	"dependencies" : {
