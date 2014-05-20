@@ -8,25 +8,28 @@ based entirely upon the protocol documentation found in
 _Publisher/Producer_ [examples/publish.js](https://github.com/jmanero/nsq-client/blob/master/example/publish.js)
 
 ```
-var NSQClient = require("nsq-client");
-var Util = require("util");
 var Crypto = require("crypto");
+var NSQClient = require("../index");
+var Util = require("util");
 
-var client = new NSQClient();
-client.publisher().on("error", function() {
-    Util.log("error " + Util.inspect(Array.apply(null, arguments)));
+var client = new NSQClient({
+  debug : true
 });
-client.publisher().on("event", function() { // Debugging
-    Util.log("event " + Util.inspect(Array.apply(null, arguments)));
+client.on("error", function(err) {
+    console.log("ERROR " + Util.inspect(err));
+});
+client.on("debug", function(event) {
+    console.log("DEBUG " + Util.inspect(event));
 });
 
 var topics = process.argv.slice(2);
 function randomishTopic() {
-    return topics[Math.floor(Math.random() * topics.length)];
+    var i = Math.floor(Math.random() * topics.length);
+    return topics[i];
 }
 
 setInterval(function() {
-    client.publish(randomishTopic(), { my_date : Date.now(), meh : Crypto.randomBytes(8).toString("hex") });
+    client.publish(randomishTopic(), { date : Date.now(), meh : Crypto.randomBytes(8).toString("hex") });
 }, 50);
 
 process.once("SIGINT", function() {
@@ -43,23 +46,29 @@ process.once("SIGINT", function() {
 _Subscriber/Consumer_ [examples/subscribe.js](https://github.com/jmanero/nsq-client/blob/master/example/subscribe.js)
 
 ```
-var NSQClient = require("nsq-client");
+var NSQClient = require("../index");
 var OS = require("os");
 var Util = require("util");
 
-var client = new NSQClient();
+var client = new NSQClient({
+  debug : true
+});
 
 var channel = OS.hostname();
+
+// Debugging Output
+client.on("error", function(error) {
+    console.log("ERROR " + Util.inspect(error));
+});
+client.on("debug", function(event) {
+    console.log("DEBUG " + Util.inspect(event));
+});
+
+// Subscribe to topics defined on stdin
 process.argv.slice(2).forEach(function(topic) {
     console.log("Subscribing to " + topic + "/" + channel);
     var subscriber = client.subscribe(topic, channel, {
         ephemeral : true
-    });
-    subscriber.on("error", function(error) {
-        console.log(topic + "::error " + Util.inspect(error));
-    });
-    subscriber.on("event", function() { // Debugging
-        console.log(topic + "::event " + Util.inspect(Array.apply(null, arguments)));
     });
     subscriber.on("message", function(message) {
         message.finish();
@@ -68,7 +77,7 @@ process.argv.slice(2).forEach(function(topic) {
 
 process.once("SIGINT", function() {
     process.once("SIGINT", process.exit);
-    
+
     console.log();
     console.log("Closing client connections");
     console.log("Press CTL-C again to force quit");
@@ -79,14 +88,14 @@ process.once("SIGINT", function() {
 ```
 
 ### TODO
-#### Release 1.0.0 (February 2014)
+#### Release 1.0.0 (~~February 2014~~ May 2014)
  * Major overhaul of the `Protocol` state machine
    * TCP failure tolerance and reconnection
    * Proper transaction handling for REQ/REP Commands (`IDENTIFY`, `SUB`, `PUB`, `CLS`)
    * Error response handling
  * Separation of the `Connection` controller from `NSQClient`. An instance of `NSQClient` stores connection data for a single `nsqd` and provides methods to create/access a publisher connection and to create subscriber connections.
  * Use [int64-native](https://npmjs.org/package/int64-native) to handle message timestamps
- 
+
 #### Someday
  * `MPUB`
  * Clustered operation
@@ -94,7 +103,7 @@ process.once("SIGINT", function() {
    * Provide schemes for `nsqd` failover, message de-duping
 
 ## MIT License
-Copyright (c) 2013 John Manero, Dynamic Network Services Inc.
+    Copyright (c) 2013 John Manero, Dynamic Network Services Inc.
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of
     this software and associated documentation files (the "Software"), to deal in
@@ -102,10 +111,10 @@ Copyright (c) 2013 John Manero, Dynamic Network Services Inc.
     use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
     of the Software, and to permit persons to whom the Software is furnished to do
     so, subject to the following conditions:
-    
+
     The above copyright notice and this permission notice shall be included in all
     copies or substantial portions of the Software.
-    
+
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE

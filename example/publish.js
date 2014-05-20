@@ -5,11 +5,11 @@ var Util = require("util");
 var client = new NSQClient({
   debug : true
 });
-client.publisher().on("error", function() {
-    console.log("error " + Util.inspect(Array.apply(null, arguments)));
+client.on("error", function(err) {
+    console.log("ERROR " + Util.inspect(err));
 });
-client.publisher().on("event", function() {
-    console.log("event " + Util.inspect(Array.apply(null, arguments)));
+client.on("debug", function(event) {
+    console.log("DEBUG " + Util.inspect(event));
 });
 
 var topics = process.argv.slice(2);
